@@ -1,18 +1,19 @@
 CC = g++
 CFLAGS = -O3
 EXEC = main.o
-OUTPUT = data
-PLOT = graph.png
 OUTDIR = out/
+OUTPUT = $(OUTDIR)data
+PLOT = graph.png
+
 
 $(OUTDIR) :
 	mkdir $@
 
 $(EXEC) : main.cpp $(OUTDIR)
-	$(CC) $(CFLAGS) $< -o $(OUTDIR)$@
+	$(CC) $(CFLAGS) $< -o $@
 
 $(OUTPUT) : $(EXEC) $(OUTDIR)
-	./$< >> $(OUTDIR)$@
+	./$< >> $@
 
 plot : $(OUTPUT)
 	gnuplot plot_script
