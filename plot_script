@@ -1,0 +1,4 @@
+set title "Dataplot"
+set term png
+set output "graph.png"
+plot "data" using 1:2 title "Test"
