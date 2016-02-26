@@ -54,9 +54,7 @@ int main() {
         X[n]=7*n;
         for (int i=0; i<N; i++) Y[i]=rand() % (7*n); // searches
 
-        cout << n << " "
-        << time_function(binary_search) << " "
-        << time_function(binary_search2) << endl;
+        cout << n << " " << time_function(binary_search2) << endl;
     }
     return 0;
 }

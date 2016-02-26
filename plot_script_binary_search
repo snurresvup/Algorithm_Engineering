@@ -1,0 +1,2 @@
+set logscale x
+plot "data-binary_search"
