@@ -1,11 +1,11 @@
 #include <iostream>
+#include <unistd.h>
 
 using namespace std;
 
 const int N=10000000;
 int Searches[N], Inputs_A[N], Inputs_BST[N];
 int n = 0; //Updated in main
-
 
 double time(int (*f)(int)) {
     int sum=0;
@@ -71,7 +71,6 @@ int main() {
         Inputs_A[n]=7*n;
         for(int i=0; i<N; i++) Searches[i]=rand() % (7*n);
         build_binary_search_tree(Inputs_A, 0, n, 0);
-
         cout << n << " " << time(binary_search) << " " << time(binary_search_on_BST) << endl;
     }
     return 0;
