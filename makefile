@@ -32,6 +32,12 @@ trace_and_plot_all : $(TEMPLATES) plot_all $(OBJECTS)
 	$(foreach template, $(TEMPLATES), $(foreach object, $(OBJECTS), instruments -t $(template) -D $(OUTDIR)/$(object:.o=-$(template:.tracetemplate=.trace)) $(object)${\n}))
 	$(info Traces and plots can be found in the out directory)
 
+trace_bst_multiple : binary_search_BST_BFS.o $(TEMPLATES)
+	$(foreach num, 7 49 2401 32768, \
+		$(foreach template, $(TEMPLATES), instruments -t $(template) -D $(OUTDIR)/$(<:.o=-$(num)$(template:.tracetemplate=.trace)) $< $(num) ${\n}))
+
+
 clean :
-	rm -rf $(OUTDIR)
 	rm -f $(OBJECTS)
+	rm -rf $(OUTDIR)
+
