@@ -1,0 +1,2 @@
+set logscale x
+plot "out/binary_search.dat"
