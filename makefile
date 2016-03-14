@@ -36,6 +36,9 @@ trace_bst_multiple : binary_search_BST_BFS.o $(TEMPLATES)
 	$(foreach num, 7 49 2401 32768, \
 		$(foreach template, $(TEMPLATES), instruments -t $(template) -D $(OUTDIR)/$(<:.o=-$(num)$(template:.tracetemplate=.trace)) $< $(num) ${\n}))
 
+trace_bst_dfsl_multiple : binary_search_BST_DFSl.o $(TEMPLATES)
+	$(foreach num, 0.01 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 0.99, \
+		$(foreach template, $(TEMPLATES), instruments -t $(template) -D $(OUTDIR)/$(<:.o=-$(num)$(template:.tracetemplate=DFSL$(num).trace)) $< 400000 $(num) ${\n}))
 
 clean :
 	rm -f $(OBJECTS)
