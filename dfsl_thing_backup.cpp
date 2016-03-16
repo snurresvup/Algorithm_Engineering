@@ -55,7 +55,7 @@ Node* build_BST(int in[], int L, int H, double skew){
   return new Node(in[i],
 		  build_BST(in, L, i-1, skew),
 		  build_BST(in, i+1, H, skew));  
-};
+}
 
 int tree_to_dfsl(int index, Node* current_node){
   dfsl_array[index].val = current_node->val;
@@ -65,9 +65,7 @@ int tree_to_dfsl(int index, Node* current_node){
   }
 
   int next_index = index+1;
-  if(current_node->left != NULL){
-    next_index = tree_to_dfsl(next_index, current_node->left);
-  }
+  next_index = tree_to_dfsl(next_index, current_node->left);
   
   if (current_node->right != NULL) {
     dfsl_array[index].right = &dfsl_array[next_index];
@@ -78,15 +76,8 @@ int tree_to_dfsl(int index, Node* current_node){
 
 Node * tree_to_bfs(int index, Node * current_node){
   bfs_array[index].val = current_node->val;
-
-  if(current_node->left != NULL){
-    bfs_array[index].left = tree_to_bfs(index*2+1, current_node->left);
-  }
-  
-  if(current_node->right != NULL){
-    bfs_array[index].right = tree_to_bfs(index*2+2, current_node->right);
-  }
-
+  bfs_array[index].left = tree_to_bfs(index*2+1, current_node->left);
+  bfs_array[index].right = tree_to_bfs(index*2+2, current_node->right);
   return &bfs_array[index];
 };
 
@@ -120,13 +111,13 @@ int main(int argc, char *argv[]){
     Node * root = build_BST(Inputs, 0, n, skew);
 
     int last_index = tree_to_dfsl(0, root);
-    Node * r = tree_to_bfs(0, root);
+    int index = tree_to_bfs(0, root);
 
-    cout << "Root value in bfs tree: " << r->val << " --- Last index from dfsl build: " << last_index << endl;
+    cout << "Lats index returned by dfsl build: " << last_index << index << endl;
 
     cout << run_binary_search(binary_search_on_bst, dfsl_array) << endl;
   }else if(atoi(argv[1]) <= 0){
-    cout << "start"<<endl;
+    
     double skew = atof(argv[2]);
     
     for(n=7; n<N; n=n*2+1){
@@ -135,14 +126,12 @@ int main(int argc, char *argv[]){
       for(int i=0; i<N; i++) Searches[i]=rand()%(7*n);
       
       Node * root = build_BST(Inputs, 0, n, skew);
-      cout << "bst built" << endl;
-      Node * r = tree_to_bfs(0, root);
-      cout << "bfs layed out " << r->val << endl;
-      int last_index = tree_to_dfsl(0, root);
-      cout << "dfsl layed out" << last_index << endl;
       
-      cout << "BFS layout: " << time(binary_search_on_bst, bfs_array) << endl;
-      cout <<", DFSL layout: " << time(binary_search_on_bst, dfsl_array) << endl;
+      int last_index = tree_to_dfsl(0, root);
+      int index = tree_to_bfs(0, root);
+      
+      
+      cout << "BFS layout: " << time(binary_search_on_bst, bfs_array) << ", DFSL layout: " << time(binary_search_on_bst, dfsl_array) << endl;
     }
   }
 };
