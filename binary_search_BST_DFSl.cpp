@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unistd.h>
+#include <math.h>
 
 using namespace std;
 
@@ -17,11 +18,12 @@ struct Node{
   }
 };
 
-const int N=10000000;
+const int N=1000;
+const long bfs_size = 1000000000;
 int Inputs[N];
 int Searches[N];
 Node dfsl_array[N];
-Node bfs_array[N];
+Node bfs_array[bfs_size];
 int n = 0; //Set by main
 
 int run_binary_search(Node (*f)(int, Node *), Node* arr){
@@ -49,23 +51,30 @@ double time(Node (*f)(int, Node*), Node* arr) {
 Node* build_BST(int in[], int L, int H, double skew){
   if(L>=H) return NULL;
 
-  int i = (H+L)/(1/skew);
-  i = i!=0 ? i : 1;
+  int i = L + round((H-L)/(1/skew));
+
+  if(i == L){
+    return new Node(in[i],
+		    NULL,
+		    build_BST(in, L+1, H, skew));
+  }
+  if(i == H){
+    return new Node(in[i],
+		    build_BST(in, L, H-1, skew),
+		    NULL);
+  }
   
   return new Node(in[i],
 		  build_BST(in, L, i-1, skew),
-		  build_BST(in, i+1, H, skew));  
+		  build_BST(in, i+1, H, skew));
 };
 
 int tree_to_dfsl(int index, Node* current_node){
   dfsl_array[index].val = current_node->val;
 
-  if(current_node->left != NULL){
-    dfsl_array[index].left = &dfsl_array[index+1];
-  }
-
   int next_index = index+1;
   if(current_node->left != NULL){
+    dfsl_array[index].left = &dfsl_array[next_index];
     next_index = tree_to_dfsl(next_index, current_node->left);
   }
   
@@ -73,21 +82,49 @@ int tree_to_dfsl(int index, Node* current_node){
     dfsl_array[index].right = &dfsl_array[next_index];
     next_index = tree_to_dfsl(next_index, current_node->right);
   }
+
   return next_index;
 };
+
+Node * tree_to_bfs_compact(int index, Node * current_node) {
+  bfs_array[index].val = current_node->val;
+
+  if(current_node->left != NULL){
+    bfs_array[index].left = &bfs_array[];
+  }
+}
 
 Node * tree_to_bfs(int index, Node * current_node){
   bfs_array[index].val = current_node->val;
 
   if(current_node->left != NULL){
+    if(index*2+1>bfs_size){
+      //The tree won't fit in memory
+      return NULL;
+    }
     bfs_array[index].left = tree_to_bfs(index*2+1, current_node->left);
   }
   
-  if(current_node->right != NULL){
+  if(current_node->right != NULL && !index*2+2 >N-1){
+    if(index*2+2>bfs_size){
+      //The tree won't fit in memory;
+      return NULL;
+    }
     bfs_array[index].right = tree_to_bfs(index*2+2, current_node->right);
   }
 
   return &bfs_array[index];
+};
+
+int count_nodes(Node * root){
+  int count = 1;
+  if(root->left != NULL){
+    count += count_nodes(root->left);
+  }
+  if(root->right != NULL){
+    count += count_nodes(root->right);
+  }
+  return count;
 };
 
 Node binary_search_on_bst(int s, Node array[]) {
@@ -128,20 +165,24 @@ int main(int argc, char *argv[]){
   }else if(atoi(argv[1]) <= 0){
     cout << "start"<<endl;
     double skew = atof(argv[2]);
-    
+
     for(n=7; n<N; n=n*2+1){
       for(int i=0; i<n; i++) Inputs[i]=i*7;
       
       for(int i=0; i<N; i++) Searches[i]=rand()%(7*n);
-      
+
       Node * root = build_BST(Inputs, 0, n, skew);
-      cout << "bst built" << endl;
+
+      tree_to_dfsl(0, root);
+
       Node * r = tree_to_bfs(0, root);
-      cout << "bfs layed out " << r->val << endl;
-      int last_index = tree_to_dfsl(0, root);
-      cout << "dfsl layed out" << last_index << endl;
+      if(r == NULL){
+	cout << "BFS layout no longer fits" << endl;
+      }else{
+	cout << "Nodes in bfs " << count_nodes(&bfs_array[0]) << " Nodes in dfsl " << count_nodes(&dfsl_array[0]) << endl;
+	cout << "BFS layout: " << time(binary_search_on_bst, bfs_array);
+      }
       
-      cout << "BFS layout: " << time(binary_search_on_bst, bfs_array) << endl;
       cout <<", DFSL layout: " << time(binary_search_on_bst, dfsl_array) << endl;
     }
   }
