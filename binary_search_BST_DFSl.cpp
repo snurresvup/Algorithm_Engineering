@@ -18,8 +18,8 @@ struct Node{
   }
 };
 
-const int N=10000000;
-const long bfs_size = 10000000000;
+const int N=10000;
+const long bfs_size = 1000000000000;
 int Inputs[N];
 int Searches[N];
 Node dfsl_array[N];

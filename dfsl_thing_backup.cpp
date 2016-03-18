@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unistd.h>
+#include <math.h>
 
 using namespace std;
 
@@ -17,11 +18,12 @@ struct Node{
   }
 };
 
-const int N=10000000;
+const int N=10000;
+const long bfs_size = 10000000000000;
 int Inputs[N];
 int Searches[N];
-Node dfsl_array[N];
-Node bfs_array[N];
+Node * dfsl_array = new Node[N];
+Node * bfs_array = new Node[bfs_size];
 int n = 0; //Set by main
 
 int run_binary_search(Node (*f)(int, Node *), Node* arr){
@@ -47,38 +49,66 @@ double time(Node (*f)(int, Node*), Node* arr) {
 };
 
 Node* build_BST(int in[], int L, int H, double skew){
-  if(L>=H) return NULL;
+  if(L+1>=H) return NULL;
 
-  int i = (H+L)/(1/skew);
-  i = i!=0 ? i : 1;
+  int i = L + floor((H-L)/(1/skew));
+
+  if(i == L){
+    return new Node(in[i],
+		    NULL,
+		    build_BST(in, L+1, H, skew));
+  }
+  if(i == H-1){
+    return new Node(in[i],
+		    build_BST(in, L, H-1, skew),
+		    NULL);
+  }
   
   return new Node(in[i],
-		  build_BST(in, L, i-1, skew),
-		  build_BST(in, i+1, H, skew));  
-}
+		  build_BST(in, L, i, skew),
+		  build_BST(in, i+1, H, skew));
+};
 
 int tree_to_dfsl(int index, Node* current_node){
   dfsl_array[index].val = current_node->val;
 
-  if(current_node->left != NULL){
-    dfsl_array[index].left = &dfsl_array[index+1];
-  }
-
   int next_index = index+1;
-  next_index = tree_to_dfsl(next_index, current_node->left);
+  if(current_node->left != NULL){
+    dfsl_array[index].left = &dfsl_array[next_index];
+    next_index = tree_to_dfsl(next_index, current_node->left);
+  }
   
   if (current_node->right != NULL) {
     dfsl_array[index].right = &dfsl_array[next_index];
     next_index = tree_to_dfsl(next_index, current_node->right);
   }
+
   return next_index;
 };
 
 Node * tree_to_bfs(int index, Node * current_node){
   bfs_array[index].val = current_node->val;
-  bfs_array[index].left = tree_to_bfs(index*2+1, current_node->left);
-  bfs_array[index].right = tree_to_bfs(index*2+2, current_node->right);
+
+  if(current_node->left != NULL){
+    bfs_array[index].left = tree_to_bfs(index*2+1, current_node->left);
+  }
+  
+  if(current_node->right != NULL){
+    bfs_array[index].right = tree_to_bfs(index*2+2, current_node->right);
+  }
+
   return &bfs_array[index];
+};
+
+int count_nodes(Node * root){
+  int count = 1;
+  if(root->left != NULL){
+    count += count_nodes(root->left);
+  }
+  if(root->right != NULL){
+    count += count_nodes(root->right);
+  }
+  return count;
 };
 
 Node binary_search_on_bst(int s, Node array[]) {
@@ -111,27 +141,39 @@ int main(int argc, char *argv[]){
     Node * root = build_BST(Inputs, 0, n, skew);
 
     int last_index = tree_to_dfsl(0, root);
-    int index = tree_to_bfs(0, root);
+    Node * r = tree_to_bfs(0, root);
 
-    cout << "Lats index returned by dfsl build: " << last_index << index << endl;
+    cout << "Root value in bfs tree: " << r->val << " --- Last index from dfsl build: " << last_index << endl;
 
     cout << run_binary_search(binary_search_on_bst, dfsl_array) << endl;
   }else if(atoi(argv[1]) <= 0){
-    
+    cout << "start"<<endl;
     double skew = atof(argv[2]);
-    
+
     for(n=7; n<N; n=n*2+1){
       for(int i=0; i<n; i++) Inputs[i]=i*7;
       
       for(int i=0; i<N; i++) Searches[i]=rand()%(7*n);
+
+      Node * root = build_BST(Inputs, 0, n, skew);      
+
+      for(int i=0; i<N; i++){
+	dfsl_array[i].val = 0;
+	dfsl_array[i].left = NULL;
+	dfsl_array[i].right = NULL;
+      }
       
-      Node * root = build_BST(Inputs, 0, n, skew);
+      tree_to_dfsl(0, root);
+
+      Node * r = tree_to_bfs(0, root);
+      if(r == NULL){
+	cout << "BFS layout no longer fits" << endl;
+      }else{
+	cout << "Nodes in BST " << count_nodes(root) << " Nodes in bfs " << count_nodes(&bfs_array[0]) << " Nodes in dfsl " << count_nodes(&dfsl_array[0]) << endl;
+	cout << "BFS layout: " << time(binary_search_on_bst, bfs_array);
+      }
       
-      int last_index = tree_to_dfsl(0, root);
-      int index = tree_to_bfs(0, root);
-      
-      
-      cout << "BFS layout: " << time(binary_search_on_bst, bfs_array) << ", DFSL layout: " << time(binary_search_on_bst, dfsl_array) << endl;
+      cout <<", DFSL layout: " << time(binary_search_on_bst, dfsl_array) << endl;
     }
   }
 };
