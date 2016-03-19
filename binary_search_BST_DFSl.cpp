@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <unistd.h>
 #include <math.h>
@@ -18,8 +19,8 @@ struct Node{
   }
 };
 
-const int N=10000;
-const long bfs_size = 1000000000000;
+const int N=1000000;
+const long bfs_size = 100000000;
 int Inputs[N];
 int Searches[N];
 Node dfsl_array[N];
@@ -49,7 +50,7 @@ double time(Node (*f)(int, Node*), Node* arr) {
 };
 
 Node* build_BST(int in[], int L, int H, double skew){
-  if(L+1>=H) return NULL;
+  if(L>=H) return NULL;
 
   int i = L + floor((H-L)/(1/skew));
 
@@ -58,7 +59,7 @@ Node* build_BST(int in[], int L, int H, double skew){
 		    NULL,
 		    build_BST(in, L+1, H, skew));
   }
-  if(i == H-1){
+  if(i == H){
     return new Node(in[i],
 		    build_BST(in, L, H-1, skew),
 		    NULL);
@@ -129,6 +130,24 @@ Node binary_search_on_bst(int s, Node array[]) {
   return current_node;
 };
 
+void print_tree(Node * root){
+  cout << root->val << endl;
+  if(root->left != NULL){
+    print_tree(root->left);
+  }
+  if(root->right != NULL){
+    print_tree(root->right);
+  }
+}
+
+/*int main(){
+  for (int i=0; i<8; i++) Inputs[i]=i;
+  Node * root = build_BST(Inputs, 0, 8, 0.3);
+  cout << "Number of nodes in tree: " << count_nodes(root) << endl;
+  print_tree(root);
+  return 1;
+  }*/
+
 int main(int argc, char *argv[]){
   if(argc != 3 || atof(argv[2])>=1 || atof(argv[2])<=0){
     cerr << "You must provide the size of the problem, and the desired skew as arguments" << endl;
@@ -177,5 +196,3 @@ int main(int argc, char *argv[]){
     }
   }
 };
-
-  
