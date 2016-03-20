@@ -19,11 +19,12 @@ struct Node{
   }
 };
 
-const int N=1000000;
-const long bfs_size = 100000000;
+const int N=300000;
+const long bfs_size = 1000000000000;
 int Inputs[N];
 int Searches[N];
 Node dfsl_array[N];
+Node dfsr_array[N];
 Node bfs_array[bfs_size];
 int n = 0; //Set by main
 
@@ -82,6 +83,23 @@ int tree_to_dfsl(int index, Node* current_node){
   if (current_node->right != NULL) {
     dfsl_array[index].right = &dfsl_array[next_index];
     next_index = tree_to_dfsl(next_index, current_node->right);
+  }
+
+  return next_index;
+};
+
+int tree_to_dfsr(int index, Node * current_node){
+  dfsr_array[index].val = current_node->val;
+
+  int next_index = index+1;
+  if(current_node->right != NULL){
+    dfsr_array[index].right = &dfsr_array[next_index];
+    next_index = tree_to_dfsr(next_index, current_node->right);
+  }
+
+  if(current_node->left != NULL){
+    dfsr_array[index].left = &dfsr_array[next_index];
+    next_index = tree_to_dfsr(next_index, current_node->left);
   }
 
   return next_index;
