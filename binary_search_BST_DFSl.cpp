@@ -290,22 +290,23 @@ int main(int argc, char *argv[]){
 	dfsl_array[i].val = 0;
 	dfsl_array[i].left = NULL;
 	dfsl_array[i].right = NULL;
+	dfsr_array[i].val = 0;
+	dfsr_array[i].left = NULL;
+	dfsr_array[i].right = NULL;
+	bfs_array[i].val = 0;
+	bfs_array[i].left = NULL;
+	bfs_array[i].right = NULL;
       }
       
       tree_to_dfsl(0, root);
+      tree_to_dfsr(0, root);
 
       tree_to_bfs_compact(skew);
       
-      //Node * r = tree_to_bfs(0, root);
-      
-      //if(r == NULL){
-      //cout << "BFS layout no longer fits" << endl;
-      //}else{
       cout << "Nodes in BST " << count_nodes(root) << " Nodes in bfs " << count_nodes(&bfs_array[0]) << " Nodes in dfsl " << count_nodes(&dfsl_array[0]) << endl;
       cout << "BFS layout: " << time(binary_search_on_bst, bfs_array);
-      //}
-      
-      cout <<", DFSL layout: " << time(binary_search_on_bst, dfsl_array) << endl;
+      cout <<", DFSL layout: " << time(binary_search_on_bst, dfsl_array);
+      cout <<", DFSR layout: " << time(binary_search_on_bst, dfsr_array) << endl;
       
     }
   }
