@@ -35,7 +35,7 @@ struct HeavyNode{
   }
 };
 
-const int N=5000000;
+const int N=10000000;
 int Inputs[N];
 int Searches[N];
 Node dfsl_array[N];
@@ -43,21 +43,21 @@ Node dfsr_array[N];
 Node bfs_array[N];
 int n = 0; //Set by main
 
-int run_binary_search(Node (*f)(int, Node *), Node* arr){
+int run_binary_search(int (*f)(int, Node *), Node* arr){
   int sum = 0;
   for (int i=0; i<N; i++){
-    int res = (*f)(Searches[i], arr).val;
+    int res = (*f)(Searches[i], arr);
     sum += res;
   }
   return sum;
 };
 
-double time(Node (*f)(int, Node*), Node* arr) {
+double time(int (*f)(int, Node*), Node* arr) {
     int sum=0;
     clock_t start = clock();
 
     for (int i = 0; i<N; i++){
-      int res = ((*f)(Searches[i], arr)).val;
+      int res = ((*f)(Searches[i], arr));
       sum += res;
     }
     clock_t end = clock() + ((sum%2)>>5);
@@ -222,22 +222,20 @@ void tree_to_bfs_compact(double skew){
   heavy_tree_to_bfs(root);
 };
 
-Node binary_search_on_bst(int s, Node array[]) {
+int binary_search_on_bst(int s, Node array[]) {
   Node current_node = array[0];
 
-  int done = 0;
-  while(!done && current_node.val != s){
-    done = 1;
+  while(current_node.val != s){
     if(current_node.val > s && current_node.left != NULL) {
       current_node = *current_node.left;
-      done = 0;
-    } else if(current_node.val < s && current_node.right != NULL) {
+    } else if(current_node.val < s && current_node.right != NULL && current_node.right->val < s) {
       current_node = *current_node.right;
-      done = 0;
+    } else {
+      break;
     }
   }
 
-  return current_node;
+  return current_node.val;
 };
 
 void print_tree(Node * root){
@@ -259,22 +257,41 @@ void print_tree(Node * root){
   }*/
 
 int main(int argc, char *argv[]){
-  if(argc != 3 || atof(argv[2])>=1 || atof(argv[2])<=0){
+  if(argc < 3 || atof(argv[2])>=1 || atof(argv[2])<=0){
     cerr << "You must provide the size of the problem, and the desired skew as arguments" << endl;
   }else if(atoi(argv[1]) > 0){
+    Node * array_to_use = bfs_array;
+
     n = atoi(argv[1]);
     double skew = atof(argv[2]);
-    
+
     for(int i=0; i<=n; i++) Inputs[i]=i*7;
     for(int i=0; i<N; i++) Searches[i]=rand() % (7*n);
+
+
     Node * root = build_BST(Inputs, 0, n, skew);
+    
+    if(argc > 3){
+      switch(atoi(argv[3])){
+      case 0:
+	//cout << "using bfs" << endl;
+	tree_to_bfs_compact(skew);
+	array_to_use = bfs_array;
+	break;
+      case 1:
+	//cout << "using dfsl" << endl;
+	tree_to_dfsl(0, root);
+	array_to_use = dfsl_array;
+	break;
+      case 2:
+	//cout << "using dfsr" << endl;
+	tree_to_dfsr(0, root);
+	array_to_use = dfsr_array;
+	break;
+      }
+    }    
 
-    int last_index = tree_to_dfsl(0, root);
-    Node * r = tree_to_bfs(0, root);
-
-    cout << "Root value in bfs tree: " << r->val << " --- Last index from dfsl build: " << last_index << endl;
-
-    cout << run_binary_search(binary_search_on_bst, dfsl_array) << endl;
+    cout << run_binary_search(binary_search_on_bst, array_to_use) << endl;
   }else if(atoi(argv[1]) <= 0){
     cout << "start"<<endl;
     double skew = atof(argv[2]);
