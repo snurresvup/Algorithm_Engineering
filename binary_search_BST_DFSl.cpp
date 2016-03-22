@@ -35,7 +35,7 @@ struct HeavyNode{
   }
 };
 
-const int N=10000000;
+const int N=34000000;
 int Inputs[N];
 int Searches[N];
 Node dfsl_array[N];
@@ -291,7 +291,7 @@ int main(int argc, char *argv[]){
       }
     }    
 
-    cout << run_binary_search(binary_search_on_bst, array_to_use) << endl;
+    cout << time(binary_search_on_bst, array_to_use) << endl;
   }else if(atoi(argv[1]) <= 0){
     cout << "start"<<endl;
     double skew = atof(argv[2]);
