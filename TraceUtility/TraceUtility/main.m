@@ -45,8 +45,10 @@ int main(int argc, const char * argv[]) {
                             XRCountersEvent *xc = [sm eventForIdentifier:i];
                             val += *(xc.counterValues+[[l objectForKey:@"eventsIndex"] intValue]);
                         }
-                        NSPrint(@"%@",[l objectForKey:@"aliasOrMnemonic"]);
-                        NSPrint(@"%d",val);
+                        //NSPrint(@"%@",[l objectForKey:@"aliasOrMnemonic"]);
+                        NSString * valString = [NSString stringWithFormat:@"%i\n", val];
+                        [valString writeToFile:@"/dev/stdout" atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                        //NSLog(@"%d",val);
                     }
                 }
                 NSPrint(@"\n");
