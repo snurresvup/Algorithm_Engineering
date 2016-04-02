@@ -18,7 +18,19 @@ extern "C" {
 }
 #endif
 
+@protocol DVTFileSystemRepresentationProviding
+- (void)dvt_provideFileSystemRepresentationToBlock:(id)arg1;
+@end
 
+@interface DVTFilePath : NSObject <NSCopying, DVTFileSystemRepresentationProviding>
++ (id)filePathForPathString:(id)arg1;
++ (id)rootFilePath;
+@end
+
+@interface DVTDeveloperPaths : NSObject
++ (void)initializeApplicationDirectoryName:(id)arg1;
+
+@end
 
 @interface XRBacktraceAggregator : NSObject
 {
@@ -201,6 +213,7 @@ struct XRTimeRange {
 - (unsigned int)closestEventIdentifierAfterTimestamp:(unsigned long long)arg1;
 - (id)processNameForPid:(int)arg1;
 @property(readonly) NSArray *allThreads;
+- (unsigned long long)_currentTimestamp;
 - (id)threadForEvent:(id)arg1;
 @property(readonly) unsigned long long lastTimestamp;
 @end

@@ -4,12 +4,13 @@
 
 using namespace std;
 
-const int MatrixAColumns=5;
-const int MatrixARows=3;
-const int MatrixBColumns=6;
-const int MatrixBRows=5;
+int MatrixAColumns=5000;
+int MatrixARows=3000;
+int MatrixBColumns=6000;
+int MatrixBRows=5000;
 int** MatrixA;
 int** MatrixB;
+
 
 int** matrix_mult(int** ma, int** mb) {
   // MatrixA's rækker
@@ -20,14 +21,11 @@ int** matrix_mult(int** ma, int** mb) {
     for (int j=0; j<MatrixBColumns; j++) {
       int rescell = 0;
       for (int i=0; i<MatrixAColumns; i++) {
-        rescell += MatrixA[n][i]*MatrixB[i][j];
+        rescell += ma[n][i]*mb[i][j];
       }
       res[n][j] = rescell;
-      cout << res[n][j] << ' ';
     }
-    cout << endl;
   }
-
 
   return res;
 }
@@ -42,10 +40,8 @@ void setupMatrices() {
   for (int n = 0; n<MatrixARows; n++){
     MatrixA[n] = new int[MatrixAColumns];
     for (int j=0; j<MatrixAColumns; j++) {
-      MatrixA[n][j] = j*n;
-      cout << MatrixA[n][j] << ' ';
+      MatrixA[n][j] = (j+n+1)*7;
     }
-    cout << endl;
   }
 
   MatrixB = new int*[MatrixBRows];
@@ -53,18 +49,23 @@ void setupMatrices() {
   for (int m = 0; m<MatrixBRows; m++){
     MatrixB[m] = new int[MatrixBColumns];
     for (int i=0; i<MatrixBColumns; i++) {
-      MatrixB[m][i] = m*i+1;
-      cout << MatrixB[m][i] << ' ';
+      MatrixB[m][i] = (m+i+2)*7;
     }
-    cout << endl;
   }
-
-
 }
 
 int main(int argc, char *argv[]){
+  if (argc>1) {
+    MatrixAColumns = atoi(argv[1]);
+    MatrixBRows = MatrixAColumns;
+    MatrixARows = MatrixAColumns/2;
+    MatrixBColumns = MatrixBRows*2;
+  }
   setupMatrices();
-  //cout << MatrixA[9][14] << endl;
-  matrix_mult(MatrixA, MatrixB);
+  clock_t start = clock();
+  int** res = matrix_mult(MatrixA, MatrixB);
+
+  double time = (clock() - start) / (double)(CLOCKS_PER_SEC / 1000);
+  cout << res[MatrixARows-1][MatrixBColumns-1] << " " << time << endl;
   return 0;
 }
