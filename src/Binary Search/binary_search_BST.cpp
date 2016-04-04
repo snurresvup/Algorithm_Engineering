@@ -319,6 +319,8 @@ int main(int argc, char *argv[]){
       tree_to_dfsr(0, root);
 
       tree_to_bfs_compact(skew);
+
+      //cout << n << " " << time(binary_search_on_bst, dfsr_array) << endl;
       
       cout << "Nodes in BST " << count_nodes(root) << " Nodes in bfs " << count_nodes(&bfs_array[0]) << " Nodes in dfsl " << count_nodes(&dfsl_array[0]) << endl;
       cout << "BFS layout: " << time(binary_search_on_bst, bfs_array);

@@ -360,17 +360,134 @@ In this project it has been shown that using BSTs, the memory layout of the tree
 
 It may be that larger data sizes would need to be used in order to see a performance gain. If larger data sizes had been used more TLB misses would be expectable, and this may cause a notable difference to the running time. Unfortunately we have not been able to test this hypothesis because of lack of time. 
 
-\subsection{How To run the code}
+\subsection{How to run the code}
 The main code for this project can be found in \texttt{binary\_search\_BST.cpp}. The main function of the program takes as arguments the desired size of the BST to be generated and tested on, as well as the desired \textit{skew}. If the desired size of the BST is chosen to be $<=0$ the program will do a test run, comparing the running time on the three different memory layouts on increasing sizes of BSTs.
 
 \section{Matrix Multiplication}
-In this project, we have tried to create an efficient matrix multiplication algorithm. We have used two approaches: traditional algorithm theory and cache-behaviour. We have used the article Cache-Oblivious Algorithms\cite{frigo-cache}.
+In this project, we have tried to create an efficient matrix multiplication algorithm. We have used two approaches: traditional algorithm theory and cache-behaviour. We have used the article Cache-Oblivious Algorithms\cite{frigo-cache} as inspiration. We initially implemented very simple iterative algorithm without any considerations about cache and from there we used the approaches to change and improve the algorithm.
+\subsection{Improvements to matrix multiplication}
+The initial algorithm took two-dimensional integer arrays laid out intuitively in memory and calculated each cell for the result matrix. When storing a matrix, one can do it in a number of different memory layouts as seen in figure \ref{fig:matrix_memory}. The intuitive layout is row major for both factor matrices. This will result in a lot of cache hits for the first matrix, since it will load in the consecutive cells in each row needed to calculate a cell, but will result in a lot of cache misses for the second matrix, since that needs consecutive cells from each column. The first improvement, we made, was to change the layout of the second matrix to column major. This resulted in a big improvement, especially when multiplying large dimension matrices to other large dimension matrices. We also tried to improve a divide-and-conquer algorithm. The algorithm works by partitioning the matrices by the largest dimension and then doing the simple scalar function when it reaches 1 as the base case. This was a done with a row-column major layout as well, which should still work better than row-row, due to the way the partitions work. The result was a slow, but working algorithm. To improve this, we combined this with the iterative algorithm, where the base case would happen earlier and the multiply the using the iterative algorithm. This is in a way cache-oblivious, since we don't use any kind of explicit tuning, but how we define the base case condition could be seen as tuning. The algorithm could easily be expanded to be cache-aware by defining the base case condition depending on some argument. The general idea behind combining the two algorithms are to exploit the cache by using the iterative algorithm, when an entire row or column can be fit in a cache line.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/Matrix_memory_layout}
+  \caption{Layout of a 16x16 matrix in (a) row major, (b) column major, (c) 4x4-tiled, and (d) bit-interleaved layouts. Figure and caption borrowed from Frigo et al.\cite[p. 3]{frigo-cache}}
+  \label{fig:matrix_memory}
+\end{figure}
+
+\subsection{Implementation}
+Figure \ref{code:iterative_matrix_mult} shows the implementation of the row-column major layout iterative algorithm. It takes the two matrices as parameters. Then it sets up the result matrix by creating an array of MatrixARows pointers, which represents each row in the result matrix, and in each entry, it points to an integer pointer array, the size of MatrixBColumns. Then it runs through the row of matrix a and the column of matrix b and sums the products of the corresponding cells, which will be stored in the result matrix cell. Due to the column major layout of matrix b, the first dereference will give the respective column instead of the respective row, which is the case for matrix a. This is why the shared dimension (MatrixAColumns==MatrixBRows), i, is the second dereference for both matrices.
+
+\begin{figure}[H]
+	\centering
+	\begin{lstlisting}
+int** matrix_mult(int** ma, int** mb) {
+  int** res = new int*[MatrixARows];
+  for (int n=0; n<MatrixARows;n++) {
+    res[n] = new int[MatrixBColumns];
+    for (int j=0; j<MatrixBColumns; j++) {
+      int rescell = 0;
+      for (int i=0; i<MatrixAColumns; i++) {
+        rescell += ma[n][i]*mb[j][i];
+      }
+      res[n][j] = rescell;
+    }
+  }
+  return res;
+}
+	\end{lstlisting}	
+	\caption{The row-column major layout iterative algorithm for multiplying matrices}
+	\label{code:iterative_matrix_mult}
+\end{figure}
+
+Figure \ref{code:daq_matrix_mult} shows the implementation of the row-column major layout divide-and-conquer algorithm. It takes the result matrix mc as a parameter as well. It also takes the 'dimensions' of each of the three matrices as well. \*beg and \*end defines the partition of each matrix. ma is n x m, mb is m x p and mc is n x p. The first if-statement is the base case, which in this particular case is when each dimension of the partitions is less than 1000. matrix\_mult is the iterative algorithm, but expanded with the dimension limits. The 3 else if's finds the largest dimension and partitions the matrices accordingly. The 1000 in the base case is one of the thresholds we tested. Others were 10 and 10000, so there's definitely room for more testing. Furthermore it could be changed to be defined by a parameter. We didn't really test 10000 though, since the programs started behaving strange with that large matrices.
+
+\begin{figure}[H]
+	\centering
+	\begin{lstlisting}
+int** rec_matrix_mult(int** ma, int** mb, int** mc, int nbeg, int nend, int mbeg, int mend, int pbeg, int pend) {
+  if (nend-nbeg < 1000 && mend-mbeg < 1000 && pend-pbeg < 1000) {
+    matrix_mult(ma, mb, mc, nbeg, nend, mbeg, mend, pbeg, pend);
+  } else if (nend-nbeg >= mend-mbeg && nend-nbeg >= pend-pbeg) {
+    int nmid = nbeg+(nend-nbeg)/2;
+    rec_matrix_mult(ma, mb, mc, nbeg, nmid, mbeg, mend, pbeg, pend);
+    rec_matrix_mult(ma, mb, mc, nmid, nend, mbeg, mend, pbeg, pend);
+  } else if (pend-pbeg >= mend-mbeg && pend-pbeg >= nend-nbeg) {
+    int pmid = pbeg+(pend-pbeg)/2;
+
+    rec_matrix_mult(ma, mb, mc, nbeg, nend, mbeg, mend, pbeg, pmid);
+    rec_matrix_mult(ma, mb, mc, nbeg, nend, mbeg, mend, pmid, pend);
+  } else if (mend-mbeg >= nend-nbeg && mend-mbeg >= pend-pbeg) {
+    int mmid = mbeg+(mend-mbeg)/2;
+
+    rec_matrix_mult(ma, mb, mc, nbeg, nend, mbeg, mmid, pbeg, pend);
+    rec_matrix_mult(ma, mb, mc, nbeg, nend, mmid, mend, pbeg, pend);
+  }
+  return mc;
+}
+	\end{lstlisting}	
+	\caption{The row-column major layout divide-and-conquer algorithm for multiplying matrices}
+	\label{code:daq_matrix_mult}
+\end{figure}
+
 \subsection{Performed tests}
-\subsection{How To run the code}
+The tests have been done on the same computer as mentioned in (TODO Indsæt reference til Performed tests). The tests have all focused on cache behavior and running time. The counters we have been observing have been L2 PF (prefetch) miss, L2 RFO, L3 misses and TLB misses causing a pagewalk. The algorithms have been tested by multiplying matrices of varying sizes. The interesting results have mainly occurred when multiplying very large matrices with each other. We hope to show that the algorithms, that don't consider cache behavior have a higher number of misses on all counters, and that the running time is poorer as well.
+\subsection{Results}
+We ran our tests on all the different algorithms we created, but this section will focus on the ones that actually performed well. The basic iterative algorithm and the basic divide-and-conquer algorithm had such poor performance that our testing framework would spend too much time, when it reached testing on the large matrices. The runtime and the cache miss results were terrible. The improved versions showed good results and behaved somewhat as expected.
+\subsubsection{L2}
+The improved versions of the iterative algorithm and the divide-and-conquer algorithm followed each other in L2 cache misses. RFO results were a bit unexpected, since the divide-and-conquer algorithm with a threshold of 10000 should be acting exactly as the iterative one.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/L2_PF_matrix}
+  \caption{L2 PF cache misses}
+  \label{fig:L2_PF_matrix}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/L2_RFO_matrix}
+  \caption{L2 RFO cache misses}
+  \label{fig:L2_RFO_matrix}
+\end{figure}
+
+\subsubsection{L3}
+Here we have a significant difference between the divide-and-conquer algorithm compared to the iterative. The divide-and-conquer algorithm has a factor of 10 less cache misses when it comes to L3 cache, which is probably where it gains it performance increase from.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/L3_matrix}
+  \caption{L3 cache misses}
+  \label{fig:L3_matrix}
+\end{figure}
+
+\subsubsection{TLB}
+We aren't sure exactly why the divide-and-conquer algorithm with a threshold of 1000 underperforms here compared to the iterative algorithm.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/TLB_matrix}
+  \caption{TLB miss causes a page walk}
+  \label{fig:TLB_matrix}
+\end{figure}
+
+\subsubsection{Runtime}
+We see here that the divide-and-conquer algorithm performs slightly better than the iterative. The main improvement isn't shown in the graph though. The initial algorithms both took around 30 minutes to matrices with dimensions >2000, and the improved algorithms did that in ~30 seconds.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/runtime_matrix}
+  \caption{Runtime of the different algorithms}
+  \label{fig:runtime_matrix}
+\end{figure}
+
+\subsection{Conclusion}
+In this project, we improve two simple matrix multiplication algorithms with respect to the cache behavior. The outcome is a significant improvement in performance as result of better cache behavior. The main improvement is the way the matrices have been laid out in memory, since the cache preemptively fetches more data than it needs. 
+
+\subsection{How to run the code}
+The main source code for this project is in the directory MatrixMult. There is a .cpp file for each algorithm. All the programs have predefined matrix dimensions, but given an argument v they will change those dimensions to v/2, v and v*2.
 
 \section{Improving Javas Quick Sort}
 \subsection{Performed tests}
-\subsection{How To run the code}
+\subsection{How to run the code}
 
 \bibliographystyle{apalike}
 \bibliography{algeng}
