@@ -72,6 +72,8 @@
 \maketitle
 \newpage
 
+\listoffigures
+
 \section{Introduction}
 In this report 3 projects will be described, and analyzed. The projects are looking into optimizing algorithms, for search, matrix multiplication, and sorting. These three fields of algorithm engineering, are fundamental problems with wide spread use.
 This report looks into the three projects with a goal of improving the simpler and more theoretical algorithms, with respect to running time on real computers. This involves reasoning about the hardware architecture, and taking into account the evolution of modern systems. 
@@ -84,16 +86,16 @@ $Pred(x) = return \max \{ y \in S | y \leq x \}$
 
 \subsection{Modern hardware}
 \label{sec:modern_hardware}
-It is a well known fact, that using asymmetrical splits in algorithms in some cases result in better performance. %TODO REF
-This is usually caused by the hardware architecture of modern computers. In modern CPUs long computation pipelines is used to compute multiple instructions in sequence. This means, that often it will be necessary for the CPU to try and predict which branch of instructions the execution of the program will take, and stick it in the computation pipeline. If this prediction turns out to be wrong, the computations of the instructions in the wrong branch is effectively wasted work. This is known as a branch misprediction. It turns out, that in some cases it can be beneficial to make these branching statements easier to predict. This can be done by making the branching statement take the one path of execution more often than the other. Exactly how much bias is needed toward one of the branches, is not clear. 
+It is a well known fact, that using asymmetrical splits in algorithms in some cases result in better performance. \cite{brodal-bst, Kaligosi-quicksort}
+This is usually caused by the hardware architecture of modern computers. In modern CPUs long computation pipelines is used to compute multiple instructions in sequence. This means, that often it will be necessary for the CPU to try and predict which branch of instructions the execution of the program will take, and stick it in the computation pipeline. If this prediction turns out to be wrong, the computations of the instructions in the wrong branch is effectively wasted work. This is known as a branch misprediction. It turns out, that in some cases it can be beneficial to make these branching statements easier to predict, at the cost of having more comparisons \cite{brodal-branch}. This can be done by making the branching statement take the one path of execution more often than the other. Exactly how much bias is needed toward one of the branches, is not immediately clear.
 
 An other known factor to influence running time, is cache and Translation Lookaside Buffer (TLB) misses. Because it is possible to make smaller memory sizes work faster, the memory architecture of modern computers is a hierarchy. This hierarchy contains in most desktop computers three layers of cache, Random Access Memory (RAM), and disk storage. Here the three layers of cache is known as L1, L2 and L3. Multicore CPUs are often structured such that each individual core has its own dedicated L1, and L2 caches, whereas the L3 cache is shared between the cores. Here the L1, is the smallest level of cache, but the fastest, whereas L3 is largest and slowest of the three L2 is somewhere in between. RAM is however a lot larger, than the small caches, so if the program running is using data that is too large to fit in the cache, some replacement of values in the caches must be performed during the execution of the program. 
-When a program needs some resource stored in memory, it will look for it in the cache. If it is not present in the cache a cache miss occurs. This means that the resource must be found in a higher level of cache, og in main memory. If the resource is only located in main memory, a lookup in the TLB will be performed to get the address in physical memory.\footnote{In computer architecture one operates with mainly two kinds of memory, virtual and physical memory. Virtual memory, is used to hide the implications of having physical addresses. This means, that it seems like to the individual application, that it has the entire address space available. It also means, that a virtual address (the addresses the applications use) must be mapped to a physical address such that it can actually be stored.} If the address is pressent in the TLB a TLB hit occurs, and the physical address can be looked up almost instantly. If however the address is not pressent int the TLB a TLB miss occurs, and this causes a page walk, which requires several memory lookups.
+When a program needs some resource stored in memory, it will look for it in the cache. If it is not present in the cache a cache miss occurs. This means that the resource must be found in a higher level of cache, og in main memory. If the resource is only located in main memory, a lookup in the TLB will be performed to get the address in physical memory.\footnote{In computer architecture one operates with mainly two kinds of memory, virtual and physical memory. Virtual memory, is used to hide the implications of having physical addresses. This means, that it seems like to the individual application, that it has the entire address space available. It also means, that a virtual address (the addresses the applications use) must be mapped to a physical address such that it can actually be stored.} If the address is pressent in the TLB a TLB hit occurs, and the physical address can be looked up almost instantly. If however the address is not pressent int the TLB a TLB miss occurs, and this causes a page walk, which requires several memory lookups \cite[p.~450-452]{tanenbaum}.
 The TLB and the caches are ordered in such a way, that the resources are stored in sequential blocks. In the cache the data is loaded in cache lines, and the TLB is working with pages. This means that it is beneficial to access the resources used in a sequential manner whenever possible, because it will most often cause less pagewalks, and cache misses.
 
-\subsection{Improvements to binary search}
+\subsection{Improvements of binary search}
 \label{sec:improvements}
-In order to meet the complications that arises from modern hardware architecture discussed in section \ref{sec:modern_hardware}, some specific design choices has been made. One possible improve ment is to try and limit the amount of branch mispredictions to gain better performance from less waisted computing time. This is done by trying to skew the split of the search space, in order to make it more plausible for the binary search algorithm to find the result in the one side rather than the other. If the algorithm is searching for a value on a randomly uniform data structure and the algorithm is splitting the data structure in half, one would expect that there is a 50/50 chance of finding the value in either of the two partitions. This would result in a large amount of branch mispredictions, and thus it might be better to make an other partitioning. On figure \ref{fig:array_split} two different splits of an array is shown. In the tests of the algorithm a \textit{skew} is used, to determine the split-point for the algorithm. This \textit{skew} is a number between 0 and 1, where 0.5 would result in a 50/50 split, and 1 or 0 would result in the entire data structure being on the one side of the split, such that the binary search effectively would become a linear search.
+In order to meet the complications that arises from modern hardware architecture discussed in section \ref{sec:modern_hardware}, some specific design choices has been made. One possible improvement is to try and limit the amount of branch mispredictions to gain better performance from less waisted computing time. This is done by trying to skew the split of the search space, in order to make it more plausible for the binary search algorithm to find the result in the one side rather than the other. If the algorithm is searching for a value on a randomly uniform data structure and the algorithm is splitting the data structure in half, one would expect that there is a 50/50 chance of finding the value in either of the two partitions. This would result in a large amount of branch mispredictions, and thus it might be better to make an other partitioning. On Figure \ref{fig:array_split} two different splits of an array is shown. In the tests of the algorithm a \textit{skew} is used, to determine the split-point for the algorithm. This \textit{skew} is a number between 0 and 1, where 0.5 would result in a 50/50 split, and 1 or 0 would result in the entire data structure being on the one side of the split, such that the binary search effectively would become a linear search.
 
 \begin{figure}[H]
   \includegraphics[width=\textwidth]{figures/Array_eq_split}
@@ -101,9 +103,9 @@ In order to meet the complications that arises from modern hardware architecture
   \label{fig:array_split}
 \end{figure}
 
-Besides skewing the partitioning of the data structure, the data is stored as a Binary Search Tree (BST). The simplest way of storing the data for a binary search would be using a sorted array. However this approach would result in a large amount of cache misses and pagewalks, because the read from memory would be nothing like sequential. The recursive algorithm would take logarithmic steps in memory. 
+Besides skewing the partitioning of the data structure, the data is stored as a Binary Search Tree (BST)\cite[p.~286]{CLRS}. The simplest way of storing the data for a binary search would be using a sorted array. However this approach would result in a large amount of cache misses and pagewalks, because the read from memory would be nothing like sequential. The recursive algorithm would take logarithmic steps in memory. 
 
-As opposed to the sorted array, three different memory layouts of a BST has been studied. These being a Breadth First Search (BFS) manor, a Depth First Search left (DFSl) manor, and a Depth First Search right (DFSr) manor. Figure \ref{fig:BST_layouts} shows how the different layouts of BSTs are structured in memory. These layouts were chosen because of their simplicity, and their properties with respect to memory addresses when skewing the data structure. The hope for the DFSl layout is that it will perform well when the data structure is skewed to the left. The combination of high probability of visiting the left child of a node, and the fact that the left child is the next memory address, could potentially mean that there will be both less branch mispredictions and less cache misses and pagewalks.
+As opposed to the sorted array, three different memory layouts of a BST has been studied. These being a Breadth First Search (BFS) manor, a Depth First Search left (DFSl) manor, and a Depth First Search right (DFSr) manor. Figure \ref{fig:BST_layouts} shows how the different layouts of BSTs are structured in memory. These layouts were chosen because of their simplicity, and their properties with respect to memory addresses when skewing the data structure. The hope for the DFSl layout is that it will perform well when the data structure is skewed to the left. The combination of high probability of visiting the left child of a node, and the fact that the left child is the next memory address, could potentially mean that there will be both less branch mispredictions and less cache misses and pagewalks. The similar mirrored argument holds for DFSr.
 
 \begin{figure}[H]
   \centering
@@ -124,7 +126,7 @@ As opposed to the sorted array, three different memory layouts of a BST has been
 \end{figure}
 
 \subsection{Implementation}
-Because the tests performed are carried out on BSTs the binary search implementation looks as in figure \ref{code:binary_search_bst}. The implementation takes the Node (which is shown in figure \ref{code:node}) from the first index in the array. This is defined to be the root of the tree in all of the three memory layouts. And by the definition of the BST this would be the first node to be checked by the binary search algorithm. From the root the algorithm simply follows the pointers according toward the better matching value, until it finds the best match for the search.
+Because the tests performed are carried out on BSTs the binary search implementation looks as in Figure \ref{code:binary_search_bst}. The implementation takes the Node (which is shown in Figure \ref{code:node}) from the first index in the array. This is defined to be the root of the tree in all of the three memory layouts. And by the definition of the BST this would be the first node to be checked by the binary search algorithm. From the root the algorithm simply follows the pointers according toward the better matching value, until it finds the best match for the search.
 
 \begin{figure}[H]
   \centering
@@ -172,7 +174,7 @@ struct Node{
 	\label{code:node}
 \end{figure}
 
-To construct the skewed BST the algorithm in figure \ref{code:build_bst} is used. This algorithm constructs the nodes and pointers, in such a way that the resulting BST becomes skewed with the provided fraction.
+To construct the skewed BST the algorithm in Figure \ref{code:build_bst} is used. This algorithm constructs the nodes and pointers, in such a way that the resulting BST becomes skewed with the provided fraction.
 
 \begin{figure}[H]
 	\centering
@@ -180,7 +182,7 @@ To construct the skewed BST the algorithm in figure \ref{code:build_bst} is used
 Node* build_BST(int in[], int L, int H, double skew){
   if(L>=H) return NULL;
 
-  int i = L + floor((H-L)/(1/skew));
+  int i = L + floor((H-L)*skew));
 
   if(i == L){
     return new Node(in[i],
@@ -202,7 +204,7 @@ Node* build_BST(int in[], int L, int H, double skew){
 	\label{code:build_bst}
 \end{figure}
 
-When the BST is constructed it can be placed in memory according to the layouts described in section \ref{sec:improvements}. This is done by three different functions. (one for each layout) The algorithms are recursively laying out the nodes in memory, ensuring the correct placement in memory. This is done by constructing an array of nodes of the same length as the size of the BST. The nodes from the original BST are then copied into the new array in such a way, that they will fulfill the constraints of the desired layout.The algorithm for laying out the BST in a DFSl manor can be found in figure \ref{code:dfsl_layout}.
+When the BST is constructed it can be placed in memory according to the layouts described in section \ref{sec:improvements}. This is done by three different functions. (one for each layout) The algorithms are recursively laying out the nodes, ensuring the correct placement in memory. This is done by constructing an array of nodes of the same length as the size of the BST. The nodes from the original BST are then copied into the new array in such a way, that they will fulfill the constraints of the desired layout.The algorithm for laying out the BST in a DFSl manor can be found in Figure \ref{code:dfsl_layout}.
 
 \begin{figure}[H]
 	\centering
@@ -229,7 +231,7 @@ int tree_to_dfsl(int index, Node* current_node){
 \end{figure}
 
 \subsubsection{Implementation challenges}
-During the implementation of the algorithms for skewing and laying out the trees several challenges were found. The major problem was that the most obvious way to lay out a BST in a BFS manor, would not work for very skewed instances, because there would be large holes in the array, and the program would quickly run out of memory addresses. \footnote{In the straight forward BFS layout of a BST, the left child of a node would be found at the address of the node itself multiplied by two, and the right child would be found on the same address as the left plus one.} To solve this problem, and give the BFS layout a fighting chance in the tests, an other way of laying out the BST was designed. For this a new node type was used, which besides the two pointers and the value could also hold an index, which would represent the array index of the node. With this type of node it is possible to first build a BST from the new heavy nodes, and then run through the nodes and assign indexes to them. When this is done the tree of heavy nodes is the copied into an array of regular nodes, such that the extra index value in the struct would not cause any inconsistencies in the tests. The algorithm for assigning the indexes to the nodes can be found in figure \ref{code:bfs_index}. This algorithm ensures that there will be no holes in the array, so all of the layouts would take up an equal amount of space in memory.
+During the implementation of the algorithms for skewing and laying out the trees several challenges were found. The major problem was that the most obvious way to lay out a BST in a BFS manor, would not work for very skewed instances, because there would be large holes in the array, and the program would quickly run out of memory addresses\footnote{In the straight forward BFS layout of a BST, the left child of a node would be found at the address of the node itself multiplied by two, and the right child would be found on the same address as the left plus one.}. To solve this problem, and give the BFS layout a fair chance in the tests, an other way of laying out the BST was designed. For this a new node type was used, which besides the two pointers and the value could also hold an index, which would represent the array index of the node. With this type of node it is possible to first build a BST from the new heavy nodes, and then run through the nodes to assign them indexes. When this is done the tree of heavy nodes is copied into an array of regular nodes, such that the extra index value in the struct would not cause any inconsistencies in the tests. This copying also makes sure, that each node will be placed in the array in accordance with its assigned index. The algorithm for assigning the indexes to the nodes can be found in Figure \ref{code:bfs_index}. This algorithm ensures that there will be no holes in the array, so all of the layouts would take up an equal amount of space in memory.
 
 \begin{figure}[H]
 	\centering
@@ -263,12 +265,22 @@ void bfs_index_heavy_tree(HeavyNode * root){
 
 
 \subsection{Performed tests}
+All the tests in this project has been done on a MacBook Pro (15", ultimo 2011), the hardware specifications are as follows:
+\begin{itemize}
+  \item CPU: Intel Core i7-2760QM (2,4 GHz)
+  	\subitem 4 cores
+  	\subitem L1 cache: 32KB instruction/32kB data (per core)
+  	\subitem L2 cache: 256KB (per core)
+  	\subitem L3 cache: 6MB (shared)
+  \item Memory: 8GB DDR3 RAM (1333 MHz)
+\end{itemize}
+
+
 \textit{Skews} between 0.05 and 0.95 (0.05 size steps) has been tested using the different memory layouts. During the tests five different hardware counters has been monitored. These being the number of branch mispredictions, the number of times the hardware prefetchers causes a cache miss in L2 cache, the number of request for ownership (RFO) that misses L2 cache, the number of requests missing L3, and the number of misses in TLB that causes a pagewalk.
 Besides these hardware counters, the running time of the algorithm using the different skews has been measured as well.
-The algorithm has been tested on arrays of size 1,000,000 and 10,000,000. The hope is to show a larger difference in TLB misses for high and low \textit{skews} using the larger dataset. During each test the \textit{pred} query is run as many times as there is indices in the data structure. This means, that if the data structure contains 10,000,000 nodes, 10,000,000 lookups for random numbers will be performed. 
+The algorithm has been tested on arrays of size 1,000,000 and 10,000,000 (all plots presented in the report is from tests run on BST size 1,000,000). The hope is to show a larger difference in TLB misses for high and low \textit{skews} using the larger dataset. During each test the \textit{pred} query is run as many times as there is indices in the data structure. This means, that if the data structure contains 10,000,000 nodes, 10,000,000 lookups for random numbers will be performed. 
 
-From the tests one could expect to see that the curves for the running time would increase when gets closer to 0.5, and again when it is nearing the outer edges (0 and 1) where the algorithm will start to perform more like a linear search. Where usually binary search has a time complexity of $O(\log n)$ linear search has a time complexity of $O(n)$, which is the reason for the expected increase in running time toward the edges. On the other hand the findings from %TODO REF
-indicates that the running time could increase where a lot of branch mispredictions are likely to occur. With this put together one could expect to see a dip in running time as the skew moves away from 0.5 to either side. An other factor which should be taken into account is that the depth first layouts combined with a skew could result in a further increase in performance, because less cache faults and TLB misses are likely to occur. The reason is, that with a high skew (in the range $]0.5;1]$) the majority of the nodes will be in the left subtree, and with a DFSl layout, they will furthermore be placed on sequential addresses in memory. Because of these factors a skew in the range $]0.5;1]$ and a DFSl layout is expected to result in fewer branch mispredictions, and fewer cache faults which in in turn could result in better performance.
+From the tests one could expect to see that the curves for the running time would increase when gets closer to 0.5, and again when it is nearing the outer edges (0 and 1) where the algorithm will start to perform more like a linear search. Where usually binary search has a time complexity of $O(\log n)$ linear search has a time complexity of $O(n)$, which is the reason for the expected increase in running time toward the edges. On the other hand the findings from \citet{brodal-bst} indicates that the running time could increase where a lot of branch mispredictions are likely to occur. With this put together one could expect to see a peak around a \textit{skew} of 0.5, and again toward the extreme \textit{skews} to either side. It is therefor expected to find the best performance where a slightly unbalanced BST is used. An other factor which should be taken into account is that the depth first layouts combined with a skew could result in a further increase in performance, because less cache faults and TLB misses are likely to occur. The reason is, that with a high skew (in the range $]0.5;1]$) the majority of the nodes will be in the left subtree, and with a DFSl layout, they will furthermore be placed on sequential addresses in memory. Because of these factors a \textit{skew} in the range $]0.5;1]$ and a DFSl layout is expected to result in fewer branch mispredictions, and fewer cache faults which in turn could result in better performance.
 
 \subsection{Results}
 As expected the number of branch mispredictions, when running the tests for different \textit{skews} decreases with a more skewed data structure. Figure \ref{fig:branch_misses} shows the trend of branch mispredictions decreasing as the skew moves away from 0.5. Very similar results were found for both DFSl and DFSr, which is as expected since the branching would not change because of changes in memory addresses for the nodes.
@@ -280,7 +292,7 @@ As expected the number of branch mispredictions, when running the tests for diff
 	\label{fig:branch_misses}
 \end{figure}
 
-From figure \ref{fig:TLB_misses_BFS} it can be seen that the number of TLB misses increases when the data structure is less balanced. A notable increase starts when the skew passes 0.2 and 0.8. Because a pagewalk is an expensive operation compared to clock cycles or cache requests, it may therefor be expected that the running time would also increase a fair amount when the skew passes these points. Likewise a similar trend can be seen for L2 cache misses in figure \ref{fig:L2_RFO_misses_BFS}.
+From Figure \ref{fig:TLB_misses_BFS} it can be seen that the number of TLB misses increases when the data structure is less balanced. A notable increase starts when the skew passes 0.2 and 0.8. Because a pagewalk is an expensive operation compared to clock cycles or cache requests, it may therefor be expected that the running time would also increase a fair amount when the skew passes these points. Likewise a similar trend can be seen for L2 cache misses in Figure \ref{fig:L2_RFO_misses_BFS}.
 
 \begin{figure}[H]
 	\centering
@@ -296,7 +308,7 @@ From figure \ref{fig:TLB_misses_BFS} it can be seen that the number of TLB misse
 	\label{fig:L2_RFO_misses_BFS}
 \end{figure}
 
-A quite different pattern can be seen in the counts for the L3 cache misses in figure \ref{fig:L3_misses_BFS}. Here the number of cache misses starts to decrease when the skew goes toward the two extremes (When the skew goes below 0.25 or when it exceeds 0.75). The reason for this could be that the data structure gets skewed enough for the sought after nodes to be placed close enough to each other in memory for the addresses to fit in the L3 cache. This would happen in cases where the tree is so unbalanced that several child nodes in sequence would have only one child. This would mean that the size of the layers in the tree would not increase all the way to the bottom layer, but rather at some point the size of the layers would start to decrease when moving down through the tree. This could result in an entire subtree being able to fit in a cache line of the L3 cache, and thus fewer misses would occur when moving through this sub tree.
+A quite different pattern can be seen in the counts for the L3 cache misses in Figure \ref{fig:L3_misses_BFS}. Here the number of cache misses starts to decrease when the skew goes toward the two extremes (When the skew goes below 0.25 or when it exceeds 0.75). The reason for this could be that the data structure gets skewed enough for the sought after nodes to be placed close enough to each other in memory for the addresses to fit in the L3 cache. This would happen in cases where the tree is so unbalanced that several child nodes in sequence would have only one child. This would mean that the size of the layers in the tree would not increase all the way to the bottom layer, but rather at some point the size of the layers would start to decrease when moving down through the tree. This could result in an entire subtree being able to fit in a cache line of the L3 cache, and thus fewer misses would occur when moving through this sub tree.
 
 \begin{figure}[H]
 	\centering
@@ -305,9 +317,9 @@ A quite different pattern can be seen in the counts for the L3 cache misses in f
 	\label{fig:L3_misses_BFS}
 \end{figure}
 
-In figure \ref{fig:combined_misses} all the tests for all three memory layouts are put together. It is clear that the depth first memory layouts performs better in terms of cache misses and TLB misses, as expected. In all of the plots the BFS layout is causing around 20\% more misses than the DFSl and DFSr layouts. It may also be seen that the plots for the L3 cache misses for DFSl and DFSr is more uniform than BFS (figure \ref{fig:L3_misses_BFS} discussed in the previous paragraph). This can be explained from the fact that if the data structure (when using DFS) is less balanced, there will be a larger chance of the node placed sequentially in memory being the next visited by the algorithm. And because memory is used in blocks, either as cache lines, or as pages, accessing the memory sequentially will in all likelihood mean that the next resource used is already loaded.
+In Figure \ref{fig:combined_misses} all the tests for all three memory layouts are put together. It is clear that the depth first memory layouts performs better in terms of cache misses and TLB misses, as expected. In all of the plots the BFS layout is causing around 20\% more misses than the DFSl and DFSr layouts. It may also be seen that the plots for the L3 cache misses for DFSl and DFSr is more uniform than BFS (Figure \ref{fig:L3_misses_BFS} discussed in the previous paragraph). This can be explained from the fact that if the data structure is less balanced, there will be a larger chance of the node placed sequentially in memory being the next visited by the algorithm  (when using DFS). And because memory is used in blocks, either as cache lines, or as pages, accessing the memory sequentially will in all likelihood mean that the next resource used is already loaded.
 
-However when this all comes together, it is not immediately evident, that the depth first layouts actually perform better than BFS when looking at the running time. The curves found in figure \ref{fig:combined_running_time} seem to agree largely with the curvatures of the plots of the different cache misses and TLB misses. But the increase increase in cache misses from the depth first layouts to the BFS layout, does not seem to be enough of a change to make a notable difference on the running time. It could be however that the branch mispredictions is more of a dominating factor, which might explain why the running times around a \textit{skew} of 0.5 is a bit larger than the running times for less balanced trees.
+However when this all comes together, it is not immediately evident, that the depth first layouts actually perform better than BFS when looking at the running time. The curves found in Figure \ref{fig:combined_running_time} seem to agree largely with the curvatures of the plots of the different cache misses and TLB misses. But the increase in cache misses from the depth first layouts to the BFS layout, does not seem to be enough of a change to make a notable difference on the running time. It could be however that the branch mispredictions is more of a dominating factor, which might explain why the running times around a \textit{skew} of 0.5 is a bit larger than the running times for less balanced trees.
 
 \begin{figure}[H]
 	\centering
@@ -334,7 +346,7 @@ However when this all comes together, it is not immediately evident, that the de
 	\label{fig:combined_running_time}
 \end{figure}
 
-From figure \ref{fig:combined_running_time} it looks like a \textit{skew} of 0.7 is preferable so a test of different data sizes has been made to compare the running times using this \textit{skew}. The result of this test can be found in figure \ref{fig:combined_running_time_07}. In this figure it is again evident, that the different layouts does not seem to make much of a difference to the running time of the algorithm. Oun could expect that the DFSl layout would be superior because the BST would be unbalanced to the left when using a \textit{skew} of 0.7. However et seems that if anything DFSr is actually performing a tiny bit better.
+From Figure \ref{fig:combined_running_time} it looks like a \textit{skew} of 0.7 is preferable so a test of different data sizes has been made to compare the running times using this \textit{skew}. The result of this test can be found in Figure \ref{fig:combined_running_time_07}. In this figure it is again evident, that the different layouts does not seem to make much of a difference to the running time of the algorithm. One could expect that the DFSl layout would be superior because the BST would be unbalanced to the left when using a \textit{skew} of 0.7. However et seems that if anything DFSr is actually performing a tiny bit better.
 
 \begin{figure}[H]
 	\centering
@@ -360,6 +372,7 @@ The main code for this project can be found in \texttt{binary\_search\_BST.cpp}.
 \subsection{Performed tests}
 \subsection{How To run the code}
 
-
+\bibliographystyle{apalike}
+\bibliography{algeng}
 
 \end{document}
