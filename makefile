@@ -31,12 +31,13 @@ $(OUTDIR) :
 $(OBJECT_DIR)/%.o : $(SOURCE_DIR)/%.cpp $(OUTDIR)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(MATRIX_OBJECTS) : $(MATRIX_SOURCES) $(OUTDIR)
+$(OBJECT_DIR)/$(MATRIX_DIR)/%.cpp : $(SOURCE_DIR)/$(MATRIX_DIR)/%.cpp $(OUTDIR)
 	$(CC) $(CFLAGS) $< -o $@
 
 $(OUTDIR)/%.dat : $(OBJECT_DIR)/%.o $(OUTDIR)
 	./$< >> $@
 
+	
 plot_all : $(PLOT_SCRIPTS) $(DATA_FILES)
 	gnuplot $<
 
@@ -47,6 +48,10 @@ time_dfsl : $(OBJECT_DIR)/binary_search_BST_DFSl.o
 test_matrix : $(MATRIX_OBJECTS)
 	$(foreach num, 200 500 1000 1500, \
 		$(foreach object, $(MATRIX_OBJECTS), instruments -t CacheMisses.tracetemplate -D $(OUTDIR)/$(object:$(OBJECT_DIR)/$(MATRIX_DIR)/%.o=%-$(num).trace) $(object) $(num) ${\n} ./TraceUtil $(OUTDIR)/$(object:$(OBJECT_DIR)/$(MATRIX_DIR)/%.o=%-$(num).trace) -v ${\n}))
+
+test_matrix_run_time : $(MATRIX_OBJECTS)
+	$(foreach num, 200 500 1000 1500 5000, \
+		$(foreach object, $(MATRIX_OBJECTS), ./$(object) $(num) >> $(OUTDIR)/$(object:$(OBJECT_DIR)/$(MATRIX_DIR)/%.o=%.txt) ${\n}))
 
 trace_and_plot_all : $(TEMPLATES) plot_all $(OBJECTS)
 	$(foreach template, $(TEMPLATES), $(foreach object, $(OBJECTS), instruments -t $(template) -D $(OUTDIR)/$(object:$(OBJECT_DIR)/%.o=%-$(template:$(TEMPLATE_DIR)/%.tracetemplate=%.trace)) $(object)${\n}))
